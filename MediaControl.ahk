@@ -5,12 +5,12 @@
  * @author Melo (melo@meloprofessional.com)
  * @date 2026/08/27
  * @releasedate 2026/08/24
- * @version 1.0.0.115
+ * @version 1.0.0.116
  ***********************************************************************/
 
 AppName := "Media Control"
 ;@Ahk2Exe-Let U_AppName = %A_PriorLine%
-AppVersion := "1.0.0.115"
+AppVersion := "1.0.0.116"
 ;@Ahk2Exe-Let U_Version = %A_PriorLine%
 AppDescription := "This is a template as a starting point for your AutoHotKey projects. This is a template as a starting point for your AutoHotKey projects."
 ;@endregion

@@ -2,7 +2,7 @@
  * @description QOL helper functions
  * @author Melo (melo@meloprofessional.com) and Pj
  * @date 2026/08/27
- * @version 1.3.2 (Fix GuiAtTray - uses trayObj.TrayMouseX != 0)
+ * @version 1.3.3 (Fix GuiAtTray try Shell_TrayWnd)
  ***********************************************************************/
 
 
@@ -604,24 +604,26 @@ GuiAtTray(GuiObj, TrayIconHandlerObj, &spawnX, &spawnY, &w, &h) {
         tbX := 0, tbY := A_ScreenHeight - Floor(48 * scaleFactor), tbW := A_ScreenWidth, tbH := Floor(48 * scaleFactor)
     }
 
-
 	; 2. Locate System Tray Notification Area explicitly via Windows API (Ignores Mouse)
-	trayNotifyHwnd := ControlGetHwnd("TrayNotifyWnd1", "ahk_class Shell_TrayWnd")
-	if (trayNotifyHwnd) {
-		WinGetPos(&tnX, &tnY, &tnW, &tnH, trayNotifyHwnd)
-		trayCenterX := tnX + (tnW // 2)
-		trayCenterY := tnY + (tnH // 2)
-	} else {
-		MsgBox("no")
-		; Fallback: Far right edge for horizontal taskbars, bottom for vertical
-		if (tbW > tbH) {
-			trayCenterX := tbX + tbW - Floor(80 * scaleFactor)
-			trayCenterY := tbY + (tbH // 2)
-		} else {
-			trayCenterX := tbX + (tbW // 2)
-			trayCenterY := tbY + tbH - Floor(80 * scaleFactor)
-		}
-	}
+    trayNotifyHwnd := 0
+    try {
+        trayNotifyHwnd := ControlGetHwnd("TrayNotifyWnd1", "ahk_class Shell_TrayWnd")
+    }
+
+    if (trayNotifyHwnd) {
+        WinGetPos(&tnX, &tnY, &tnW, &tnH, trayNotifyHwnd)
+        trayCenterX := tnX + (tnW // 2)
+        trayCenterY := tnY + (tnH // 2)
+    } else {
+        ; Fallback: Far right edge for horizontal taskbars, bottom for vertical
+        if (tbW > tbH) {
+            trayCenterX := tbX + tbW - Floor(80 * scaleFactor)
+            trayCenterY := tbY + (tbH // 2)
+        } else {
+            trayCenterX := tbX + (tbW // 2)
+            trayCenterY := tbY + tbH - Floor(80 * scaleFactor)
+        }
+    }
 
 	; 3. Determine target monitor based purely on physical tray location
 	monIndex := MonitorGetFromPoint(trayCenterX, trayCenterY)
