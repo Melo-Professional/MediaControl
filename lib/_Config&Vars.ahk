@@ -1,0 +1,62 @@
+/************************************************************************
+ * @description Config&Vars
+ * @author Melo (melo@meloprofessional.com)
+ * @date 2026/08/16
+ * @version 1.6.0
+ ***********************************************************************/
+
+;@region Configuration
+Debug							:= false
+A_ScriptName					:= AppName
+CurrentActualTheme				:= "Light"
+NameNoSpace						:= StrReplace(AppName, " ")
+Global App := {
+    Name:						AppName,
+    NameNoSpace:				NameNoSpace,
+    NameCutted:					AppName,
+    Description:				AppDescription,
+    Icon:						A_IsCompiled ? A_ScriptFullPath : A_ScriptDir "\resources\app.ico",
+    IconPaused:					A_IsCompiled ? A_ScriptFullPath : A_ScriptDir "\resources\app_Pause.ico",
+    Copyright:					"Developed by Melo`nmelo@meloprofessional.com`n©Melo. All rights reserved.",
+    Version:					AppVersion,
+    Github:						"https://github.com/Melo-Professional/",
+	UpdateAuto:					true,
+	UpdateFrequencyDays:		3,
+	UpdateLastCheck:			""
+}
+
+Global Settings := {
+    ; General GUI
+    SplashScreen:               "Banner",
+    SplashScreenList:           ["Disabled", "Icon", "Banner"],
+    DesiredTheme:               "Auto",
+    ThemeList:                  ["Light", "Dark", "Auto"],
+    DarkModeMinVer:              "10.0.17763",
+    DarkModeCompatible:          false,
+    GuiFontSizeSmall:           8,
+    GuiFontSizeMedium:          9,
+    GuiFontSizeBig:             10,
+    GuiFontSizeExtraBig:        14,
+    GuiFontName:                "Segoe UI",
+    GuiSplashTimer:             1800,
+    IsScriptPaused:             false,
+
+; GUI Colors
+    Theme: {
+        Dark: {
+            Bg:                 "1b1b1b", 
+            BgHover:            "313131", 
+            TextDefault:        "CCCCCC",
+            TextStrong:         "FFFFFF",
+            TextSmooth:         "888888" 
+        },
+        Light: {
+            Bg:                 "F0F0F0", 
+            BgHover:            "e0e0e0", 
+            TextDefault:        "222222",
+            TextStrong:         "000000",
+            TextSmooth:         "666666" 
+        }
+    }
+}
+;@endregion
