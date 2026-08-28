@@ -3,16 +3,25 @@
 /************************************************************************
  * @description This is a template as a starting point for your AutoHotKey projects.
  * @author Melo (melo@meloprofessional.com)
- * @date 2026/08/27
+ * @date 2026/08/28
  * @releasedate 2026/08/24
- * @version 1.0.0.116
+ * @version 1.0.0.119
  ***********************************************************************/
 
 AppName := "Media Control"
 ;@Ahk2Exe-Let U_AppName = %A_PriorLine%
-AppVersion := "1.0.0.116"
+AppVersion := "1.0.0.119"
 ;@Ahk2Exe-Let U_Version = %A_PriorLine%
 AppDescription := "This is a template as a starting point for your AutoHotKey projects. This is a template as a starting point for your AutoHotKey projects."
+;@Ahk2Exe-AddResource .\resources\play.png, 209
+;@Ahk2Exe-AddResource .\resources\pause.png, 210
+;@Ahk2Exe-AddResource .\resources\next.png, 211
+;@Ahk2Exe-AddResource .\resources\previous.png, 212 
+;@Ahk2Exe-AddResource .\resources\mute.png, 213
+;@Ahk2Exe-AddResource .\resources\unmute.png, 214
+;@Ahk2Exe-AddResource .\resources\stop.png, 215
+;@Ahk2Exe-AddResource .\resources\minus.png, 216
+;@Ahk2Exe-AddResource .\resources\plus.png, 217
 ;@endregion
 
 _bkpMode := "AppVersionAndMinutes"

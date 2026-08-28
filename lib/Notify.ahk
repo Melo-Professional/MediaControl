@@ -1,16 +1,13 @@
 
-imagePlay :=            A_ScriptDir ".\assets\images\play.png"
-imagePause :=           A_ScriptDir ".\assets\images\pause.png"
-imageAdd :=             A_ScriptDir ".\assets\images\add.png"
-imageConnect :=         A_ScriptDir ".\assets\images\connect.png"
-imageFullscreen :=      A_ScriptDir ".\assets\images\fullscreen.png"
-imageNext :=            A_ScriptDir ".\assets\images\next.png"
-imagePrevious :=        A_ScriptDir ".\assets\images\previous.png"
-imageMute :=            A_ScriptDir ".\assets\images\mute.png"
-imageUnmute :=          A_ScriptDir ".\assets\images\unmute.png"
-IconStop :=				A_ScriptDir ".\assets\images\stop.png"
-IconMinus :=			A_ScriptDir ".\assets\images\minus.png"
-IconPlus :=			 	A_ScriptDir ".\assets\images\plus.png"
+imagePlay :=				A_IsCompiled ? A_ScriptFullPath ", 209" : A_ScriptDir ".\resources\play.png"
+imagePause :=				A_IsCompiled ? A_ScriptFullPath ", 210" : A_ScriptDir ".\resources\pause.png"
+imageNext :=				A_IsCompiled ? A_ScriptFullPath ", 211" : A_ScriptDir ".\resources\next.png"
+imagePrevious :=			A_IsCompiled ? A_ScriptFullPath ", 212" : A_ScriptDir ".\resources\previous.png"
+imageMute :=				A_IsCompiled ? A_ScriptFullPath ", 213" : A_ScriptDir ".\resources\mute.png"
+imageUnmute :=				A_IsCompiled ? A_ScriptFullPath ", 214" : A_ScriptDir ".\resources\unmute.png"
+IconStop :=					A_IsCompiled ? A_ScriptFullPath ", 215" : A_ScriptDir ".\resources\stop.png"
+IconMinus :=				A_IsCompiled ? A_ScriptFullPath ", 216" : A_ScriptDir ".\resources\minus.png"
+IconPlus :=					A_IsCompiled ? A_ScriptFullPath ", 217" : A_ScriptDir ".\resources\plus.png"
 
 Global OSDGeneral           := OSDCustom()
 OSDGeneral.Monitor 	        := 1
