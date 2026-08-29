@@ -41,6 +41,8 @@ CreateMediaGui() {
 	global FullBackground := General.MediaPopupArtWorkType == "Artwork full"
 	if FullBackground {
 
+		global ArtWidth := MediaGUIWidth * 1.5
+
 		PicControl := MyGui.AddPicture("x-" MediaGUIWidth * 0.25 " y0 Center Valign AltSubmit BackgroundTrans w" MediaGUIWidth * 1.5 " h-1 ", "")
 		WinSetTransparent(35,PicControl.Hwnd)
 		PosY := MyGui.MarginY
@@ -68,10 +70,10 @@ CreateMediaGui() {
 	global SessionText := MyGui.AddText("x0 y" PosY " w" MediaGUIWidth " Center +0x200 h23 BackgroundTrans" , "No Active Apps")
 
 
-	MyGui.SetFont("s8 w1000 q5", "Segoe UI")
+	MyGui.SetFont("s11 w1000 q5", "Segoe UI")
 	PrevAppBtn := MyGui.AddText("xm y" PosY " w23 Center +0x200 h23 Background" BGroundNormalColor, "<")
 
-	MyGui.SetFont("s8 w1000 q5", "Segoe UI")
+	MyGui.SetFont("s11 w1000 q5", "Segoe UI")
 	NextAppBtn := MyGui.AddText("x" (MediaGUIWidth - MyGui.MarginX - 23) " y" PosY " w23 Center +0x200 h23", ">")
 
 	PosY += 30
@@ -193,7 +195,7 @@ CreateMediaGui() {
 
 ; --- EVENT-DRIVEN GUI UPDATER ---
 UpdateGuiDisplay(mediaInfo := "") {
-    global PicControl, TitleText, ArtistText, StatusText, PlayPauseBtn, VolSlider, VolText, MediaController
+    global PicControl, TitleText, ArtistText, StatusText, PlayPauseBtn, VolSlider, VolText, MediaController, FullBackground
 
     if (mediaInfo == "") {
         mediaInfo := MediaController.GetMediaInfo()
@@ -217,21 +219,22 @@ UpdateGuiDisplay(mediaInfo := "") {
     if (mediaInfo.artPath != "") {
 
 		if FullBackground {
-        PicControl.Value := " *h-1 " . mediaInfo.artPath
+	        PicControl.Value := " *h-1 " . mediaInfo.artPath
+			PicControl.GetPos(, , , &actualH)
+			startX := MediaGUIWidth * 0.25 * -1
+			startY := 0
+			PicControl.Move(startX, startY , ArtWidth, actualH)
 		} else {
-		; 1. Load the image with fixed height and proportional width (w-1)
-        PicControl.Value := " *w-1 *h" ArtHeight " " . mediaInfo.artPath
-        
-        ; 2. Query the actual rendered width of the control
-        PicControl.GetPos(, , &actualW)
-        
-        ; 3. Calculate centered X coordinate and reposition the control
-        centerX := (MediaGUIWidth - actualW) / 2
-        PicControl.Move(centerX, MyGui.MarginY + 20 , actualW, ArtHeight)
-    }
+			PicControl.Value := " *w-1 *h" ArtHeight " " . mediaInfo.artPath
+			PicControl.GetPos(, , &actualW)
+			centerX := (MediaGUIWidth - actualW) / 2
+			PicControl.Move(centerX, MyGui.MarginY + 20 , actualW, ArtHeight)
+    	}
     } else {
         PicControl.Value := ""
     }
+
+;	PicControl.Redraw()
 
     ; Sync active app's volume level to slider
     if (mediaInfo.currentApp != "") {

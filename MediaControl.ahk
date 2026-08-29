@@ -5,12 +5,12 @@
  * @author Melo (melo@meloprofessional.com)
  * @date 2026/08/28
  * @releasedate 2026/08/24
- * @version 1.0.0.119
+ * @version 1.0.0.121
  ***********************************************************************/
 
 AppName := "Media Control"
 ;@Ahk2Exe-Let U_AppName = %A_PriorLine%
-AppVersion := "1.0.0.119"
+AppVersion := "1.0.0.121"
 ;@Ahk2Exe-Let U_Version = %A_PriorLine%
 AppDescription := "This is a template as a starting point for your AutoHotKey projects. This is a template as a starting point for your AutoHotKey projects."
 ;@Ahk2Exe-AddResource .\resources\play.png, 209
@@ -528,6 +528,10 @@ SelectAppMenu(appId, *) {
     MediaController.BindTargetSession(appId)
     RefreshAudioCache()
     UpdateGuiDisplay()
+}
+
+If IsSet(FirstRun) && FirstRun {
+	ShowMediaGUI()
 }
 
 OnExit((*) => MediaController.Cleanup())
