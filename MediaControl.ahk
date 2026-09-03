@@ -3,14 +3,14 @@
 /************************************************************************
  * @description This is a template as a starting point for your AutoHotKey projects.
  * @author Melo (melo@meloprofessional.com)
- * @date 2026/08/28
+ * @date 2026/09/03
  * @releasedate 2026/08/24
- * @version 1.0.0.121
+ * @version 1.0.0.133
  ***********************************************************************/
 
 AppName := "Media Control"
 ;@Ahk2Exe-Let U_AppName = %A_PriorLine%
-AppVersion := "1.0.0.121"
+AppVersion := "1.0.0.133"
 ;@Ahk2Exe-Let U_Version = %A_PriorLine%
 AppDescription := "This is a template as a starting point for your AutoHotKey projects. This is a template as a starting point for your AutoHotKey projects."
 ;@Ahk2Exe-AddResource .\resources\play.png, 209
@@ -67,13 +67,14 @@ KeyHistory(0)
 #Include *i <_Help>
 #Include *i <_Menu>
 
-#Include *i <Vars_Custom>
-#Include *i <Menu_Custom>
+#Include <Vars_Custom>
+#Include <Menu_Custom>
 #Include <Notify>
 #Include <WinRT\winrt>
 #Include <WinRTMediaManager>
 #Include <AudioSessions>
 #Include <MediaGUI>
+#Include <SettingsGUI>
 
 ;@endregion
 
@@ -94,8 +95,6 @@ IsSet(StartAutoUpdater) ? StartAutoUpdater() : 0
 ;@endregion
 
 ;@region Main
-A_IconTip := ""
-
 ;@region Hotkeys
 #HotIf !A_IsCompiled
 ^p::IsSet(ReloadClean) ? ReloadClean() : Reload()
@@ -158,18 +157,33 @@ UpdateGuiDisplay()
 A_TrayMenu.ClickCount := 2
 
 TrayHandler := TrayIconHandler()
-;TrayHandler.HoverDelay					:= 600
+TrayHandler.HoverDelay					:= 1000
 ;TrayHandler.LeaveDelay					:= 200
 TrayHandler.OnHover						:= (*) => ShowMediaGUI()
-TrayHandler.OnLeftClick					:= (*) => PlayPause()
-TrayHandler.OnRightClick				:= (*) => A_TrayMenu.Show()
-TrayHandler.OnDoubleClick				:= (*) => PreviousTrack()
-TrayHandler.OnRightDoubleClick			:= (*) => NextTrack()
-TrayHandler.OnMiddleClick				:= (*) => OpenCurrentPlayer()
-TrayHandler.OnMiddleDoubleClick			:= (*) => MuteUnmute()
 TrayHandler.OnLeave						:= (*) => TrayLeave()
-TrayHandler.OnWheelUp					:= (*) => Volume_Up()
-TrayHandler.OnWheelDown					:= (*) => Volume_Down()
+
+;TrayHandler.OnLeftClick					:= (*) => PlayPause()
+;TrayHandler.OnRightClick				:= (*) => A_TrayMenu.Show()
+;TrayHandler.OnDoubleClick				:= (*) => PreviousTrack()
+;TrayHandler.OnRightDoubleClick			:= (*) => NextTrack()
+;TrayHandler.OnMiddleClick				:= (*) => OpenCurrentPlayer()
+;TrayHandler.OnMiddleDoubleClick			:= (*) => MuteUnmute()
+;TrayHandler.OnWheelUp					:= (*) => Volume_Up()
+;TrayHandler.OnWheelDown					:= (*) => Volume_Down()
+
+TrayHandler.OnLeftClick         := (*) => RunTrayAction(General.OnLeftClick)
+TrayHandler.OnRightClick        := (*) => RunTrayAction(General.OnRightClick)
+TrayHandler.OnLeftDoubleClick   := (*) => RunTrayAction(General.OnLeftDoubleClick)
+TrayHandler.OnRightDoubleClick  := (*) => RunTrayAction(General.OnRightDoubleClick)
+TrayHandler.OnMiddleClick       := (*) => RunTrayAction(General.OnMiddleClick)
+TrayHandler.OnMiddleDoubleClick := (*) => RunTrayAction(General.OnMiddleDoubleClick)
+TrayHandler.OnWheelUp           := (*) => RunTrayAction(General.OnWheelUp)
+TrayHandler.OnWheelDown         := (*) => RunTrayAction(General.OnWheelDown)
+
+RunTrayAction(actionName) {
+    if ActionMap.Has(actionName)
+        ActionMap[actionName]() ; Call the function reference
+}
 
 TrayLeave(*) {
 	if !tracker.isMouseOverGui {
@@ -503,13 +517,11 @@ ShowMediaGUI() {
 		return
 	}
 
-	;MyGui.Show("x-99999 y-99999 w300 h168 Hide NoActivate")
-	;MyGui.Show("x-99999 y-99999 w300 h238 Hide NoActivate")
 	MyGui.Show("x-99999 y-99999 w" MediaGUIWidth " Hide NoActivate")
 	UpdateGuiDisplay()
 	GuiAtTray(MyGui, TrayHandler,&spawnX, &spawnY, &w, &h)
-	MyGui.Move(spawnX, spawnY)
-	ShowingGui := true
+    DllCall("User32\SetWindowPos", "Ptr", MyGui.Hwnd, "Ptr", -1, "Int", spawnX, "Int", spawnY, "Int", w, "Int", h, "UInt", 0x0050)
+    ShowingGui := true
 }
 
 
@@ -536,4 +548,6 @@ If IsSet(FirstRun) && FirstRun {
 
 OnExit((*) => MediaController.Cleanup())
 
+;ShowSettingsGUI()
+;Updater.ShowUpdaterGUI()
 

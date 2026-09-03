@@ -9,9 +9,13 @@
 
 Menu_Custom() {
 
+	; A_IconTip := ""
+	; CleanTrayTip()
+
     TrayMenu := A_TrayMenu
     MoreMenu := TrayMenu.HasProp("MoreMenu") ? TrayMenu.MoreMenu : ""
 
+    TrayMenu.Insert("More", "Settings...", (*) => ShowSettingsGui())
     TrayMenu.Insert("More", "Show OSD", OSDHandler)
 
 	OSDHandler(ItemName, ItemPos, MyMenu) {

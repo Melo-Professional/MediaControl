@@ -1,8 +1,8 @@
 /************************************************************************
  * @description Handles tray icon events
  * @author Melo (melo@meloprofessional.com)
- * @date 2026/08/27
- * @version 1.2.3 (double middle click fix)
+ * @date 2026/09/01
+ * @version 1.2.7 (Renamed OnDoubleClick to OnLeftDoubleClick)
  ***********************************************************************/
 
 #Requires AutoHotkey v2.0
@@ -35,7 +35,7 @@ Fires specifically when scrolling while hovering over the icon.
 
 | **Click Disambiguation** |
 OnLeftClick
-OnDoubleClick
+OnLeftDoubleClick
 OnRightClick
 OnRightDoubleClick
 OnMiddleClick
@@ -48,7 +48,7 @@ Separates single clicks from double clicks cleanly using system double-click spe
 class TrayIconHandler {
     ; --- User-Defined Callbacks ---
     OnLeftClick := ""
-    OnDoubleClick := ""
+    OnLeftDoubleClick := ""
     OnRightClick := ""
     OnRightDoubleClick := ""
     OnHover := ""
@@ -267,7 +267,7 @@ class TrayIconHandler {
                     this.PendingLeftTimer := 0
                 }
                 this.IgnoreNextLeftUp := true  ; Suppress the 2nd WM_LBUTTONUP
-                this.CallCallback(this.OnDoubleClick, this)
+                this.CallCallback(this.OnLeftDoubleClick, this)
                 return
             }
 
@@ -278,7 +278,7 @@ class TrayIconHandler {
             }
 
             ; 3. Single Click release (or 1st release of double click)
-            if (HasMethod(this.OnDoubleClick)) {
+            if (HasMethod(this.OnLeftDoubleClick)) {
                 this.PendingLeftTimer := () => (
                     this.PendingLeftTimer := 0,
                     this.CallCallback(this.OnLeftClick, this)
@@ -447,7 +447,7 @@ Fires specifically when scrolling while hovering over the icon.
 
 | **Click Disambiguation** |
 OnLeftClick
-OnDoubleClick
+OnLeftDoubleClick
 OnRightClick
 OnRightDoubleClick
 Separates single clicks from double clicks cleanly using system double-click speed timing.
@@ -546,7 +546,7 @@ MyTray := TrayIconHandler()
 MyTray.OnLeftClick := (*) => SoundSetMute(-1)
 
 ; Double click opens/restores main app window
-MyTray.OnDoubleClick := (*) => ToggleMainWindow()
+MyTray.OnLeftDoubleClick := (*) => ToggleMainWindow()
 
 ToggleMainWindow() {
     static MainGui := 0
@@ -649,7 +649,7 @@ MyTray.OnLeftClick   := () => leftclickactions()
 
 ;MyTray.OnLeftClick   := () => TrayMenu.Show()
 
-MyTray.OnDoubleClick := () => Tooltip("Double click",1400,900)
+MyTray.OnLeftDoubleClick := () => Tooltip("Double click",1400,900)
 MyTray.OnRightClick  := () => Tooltip("Right click",1400,900)
 MyTray.OnWheelUp     := () => zzzzz(1)
 MyTray.OnWheelDown   := () => zzzzz(-1)

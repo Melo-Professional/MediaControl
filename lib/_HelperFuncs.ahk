@@ -1,8 +1,8 @@
 /************************************************************************
  * @description QOL helper functions
  * @author Melo (melo@meloprofessional.com) and Pj
- * @date 2026/08/27
- * @version 1.3.3 (Fix GuiAtTray try Shell_TrayWnd)
+ * @date 2026/09/02
+ * @version 1.3.8 (CleanTrayTip)
  ***********************************************************************/
 
 
@@ -473,7 +473,7 @@ Class OnFocusLoss {
 }
 
 /**
-* @description {@link _Debug|_Debug.ahk}
+* @description {@link _Debug|_HelperFuncs.ahk}
 * Inspects variable state and caller stack details, outputting results via ToolTip, file logging, or debug console.
 * *Requires a Debug variable set to true.
 * @param {Any} [val="[CHECKPOINT]"]
@@ -559,6 +559,11 @@ _Debug(val := "[CHECKPOINT]", mode := "ToolTip", duration := 6000) {
 
 
 /**
+ * @description {@link GuiAtTray|_HelperFuncs.ahk}
+ * Returns physical coordinates X and Y at 
+ * A: app icon at system tray + 8 pixels gap
+ * B: the center of system tray + 8 pixels gap
+ * Useful for positioning a gui at tray
  * @param GuiObj
  * The GUI to calculate position
  * @param TrayIconHandlerObj
@@ -571,32 +576,19 @@ _Debug(val := "[CHECKPOINT]", mode := "ToolTip", duration := 6000) {
  * The width of the GUI
  * @param h
  * The Heights of the GUI
- * @example <caption> Sends a GUI, a icon tray handler and Gets current tray position and returns x and y to show a GUI</caption>
+ * @example <caption> Sends a GUI, a icon tray handler and Gets current tray position and returns x and y to show a GUI. Then show the GUI with physical coordinates.</caption>
  * GuiAtTray(MyGui, TrayHandler, &spawnX, &spawnY, &w, &h)
- * MyGui.Show("x" spawnX " y" spawnY " w" w " h" h)
+ * DllCall("User32\SetWindowPos", "Ptr", MyGui.Hwnd, "Ptr", -1, "Int", spawnX, "Int", spawnY, "Int", w, "Int", h, "UInt", 0x0050)
  */
 GuiAtTray(GuiObj, TrayIconHandlerObj, &spawnX, &spawnY, &w, &h) {
-
-    ; --- Abort if GUI is already open and visible ---
-    ;if (GuiObj != "" && WinExist(GuiObj.Hwnd) && DllCall("IsWindowVisible", "Ptr", GuiObj.Hwnd)) {
-;    if (GuiObj != "" && WinExist(GuiObj.Hwnd) && DllCall("IsWindowVisible", "Ptr", GuiObj.Hwnd)) {
-;		ToolTip("naoooooooooooo")
-;        return
-;    }
-
-;    if (MainGui == "" || !WinExist(MainGui.Hwnd)) {
-;        CreateAudioMixerGui()
-;    } else {
-;        RefreshSessionsForSelectedDevice()
-;    }
-
-	GuiObj.GetPos(&X, &Y, &GuiWidth, &GuiHeight)
+    if !WinExist(GuiObj.Hwnd)
+        return
 
     scaleFactor := A_ScreenDPI / 96
-    w := Floor(GuiWidth * scaleFactor)
-    h := Floor(GuiHeight * scaleFactor)
-    
-    ; 1. Get physical main taskbar dimensions
+
+    ; WinGetPos retrieves exact physical pixel dimensions directly from the window handle
+    WinGetPos(, , &w, &h, GuiObj.Hwnd)
+
     tbHwnd := WinExist("ahk_class Shell_TrayWnd")
     if tbHwnd {
         WinGetPos(&tbX, &tbY, &tbW, &tbH, tbHwnd)
@@ -604,18 +596,15 @@ GuiAtTray(GuiObj, TrayIconHandlerObj, &spawnX, &spawnY, &w, &h) {
         tbX := 0, tbY := A_ScreenHeight - Floor(48 * scaleFactor), tbW := A_ScreenWidth, tbH := Floor(48 * scaleFactor)
     }
 
-	; 2. Locate System Tray Notification Area explicitly via Windows API (Ignores Mouse)
+    ; Locate Tray Control inside Shell_TrayWnd
     trayNotifyHwnd := 0
-    try {
-        trayNotifyHwnd := ControlGetHwnd("TrayNotifyWnd1", "ahk_class Shell_TrayWnd")
-    }
+    try trayNotifyHwnd := ControlGetHwnd("TrayNotifyWnd1", "ahk_class Shell_TrayWnd")
 
     if (trayNotifyHwnd) {
         WinGetPos(&tnX, &tnY, &tnW, &tnH, trayNotifyHwnd)
         trayCenterX := tnX + (tnW // 2)
         trayCenterY := tnY + (tnH // 2)
     } else {
-        ; Fallback: Far right edge for horizontal taskbars, bottom for vertical
         if (tbW > tbH) {
             trayCenterX := tbX + tbW - Floor(80 * scaleFactor)
             trayCenterY := tbY + (tbH // 2)
@@ -625,73 +614,55 @@ GuiAtTray(GuiObj, TrayIconHandlerObj, &spawnX, &spawnY, &w, &h) {
         }
     }
 
-	; 3. Determine target monitor based purely on physical tray location
-	monIndex := MonitorGetFromPoint(trayCenterX, trayCenterY)
+    monIndex := MonitorGetFromPoint(trayCenterX, trayCenterY)
+    MonitorGet(monIndex, &mL, &mT, &mR, &mB)
 
-	MonitorGetFromPoint(X, Y) {
-		monitorCount := MonitorGetCount()
-		Loop monitorCount {
-			MonitorGet(A_Index, &Left, &Top, &Right, &Bottom)
-			if (X >= Left && X <= Right && Y >= Top && Y <= Bottom)
-				return A_Index
-		}
-		return MonitorGetPrimary()
-	}
+    MonitorGetFromPoint(X, Y) {
+        Loop MonitorGetCount() {
+            MonitorGet(A_Index, &Left, &Top, &Right, &Bottom)
+            if (X >= Left && X <= Right && Y >= Top && Y <= Bottom)
+                return A_Index
+        }
+        return MonitorGetPrimary()
+    }
 
-	MonitorGet(monIndex, &mL, &mT, &mR, &mB)
+    distTop    := Abs(trayCenterY - mT)
+    distBottom := Abs(trayCenterY - mB)
+    distLeft   := Abs(trayCenterX - mL)
+    distRight  := Abs(trayCenterX - mR)
+    minDist    := Min(distTop, distBottom, distLeft, distRight)
 
-	; 4. Determine taskbar orientation by physical proximity to monitor edges
-	distTop    := Abs(trayCenterY - mT)
-	distBottom := Abs(trayCenterY - mB)
-	distLeft   := Abs(trayCenterX - mL)
-	distRight  := Abs(trayCenterX - mR)
-	minDist    := Min(distTop, distBottom, distLeft, distRight)
+    offsetGap := Floor(8 * scaleFactor)
+    useTrayHandler := IsObject(TrayIconHandlerObj) && TrayIconHandlerObj.HasOwnProp("TrayMouseX") && TrayIconHandlerObj.TrayMouseX != 0
 
-	offsetGap := Floor(8 * scaleFactor)
-	useTrayHandler := IsObject(TrayIconHandlerObj) && TrayIconHandlerObj.HasOwnProp("TrayMouseX") && TrayIconHandlerObj.TrayMouseX != 0
+    if (minDist == distTop) {
+        spawnX := useTrayHandler ? TrayIconHandlerObj.TrayMouseX - (w // 2) : trayCenterX - (w // 2)
+        spawnY := useTrayHandler ? Max(TrayIconHandlerObj.TrayMouseY, tbY + tbH) + offsetGap : tbY + tbH + offsetGap
+    } else if (minDist == distBottom) {
+        spawnX := useTrayHandler ? TrayIconHandlerObj.TrayMouseX - (w // 2) : trayCenterX - (w // 2)
+        spawnY := useTrayHandler ? Min(TrayIconHandlerObj.TrayMouseY, tbY) - h - offsetGap : tbY - h - offsetGap
+    } else if (minDist == distLeft) {
+        spawnX := useTrayHandler ? Max(TrayIconHandlerObj.TrayMouseX, tbX + tbW) + offsetGap : tbX + tbW + offsetGap
+        spawnY := useTrayHandler ? TrayIconHandlerObj.TrayMouseY - (h // 2) : trayCenterY - (h // 2)
+    } else {
+        spawnX := useTrayHandler ? Min(TrayIconHandlerObj.TrayMouseX, tbX) - w - offsetGap : tbX - w - offsetGap
+        spawnY := useTrayHandler ? TrayIconHandlerObj.TrayMouseY - (h // 2) : trayCenterY - (h // 2)
+    }
 
-	; 5. Position GUI directly adjacent to System Tray (Center-aligned to Tray)
-	if (minDist == distTop) {
-		; Top Taskbar
-		spawnX := useTrayHandler ? TrayIconHandlerObj.TrayMouseX - (w // 2) : trayCenterX - (w // 2)
-		spawnY := useTrayHandler ? max( TrayIconHandlerObj.TrayMouseY, (tbY + tbH)) + offsetGap : (tbY + tbH) + offsetGap
-	} else if (minDist == distBottom) {
-		; Bottom Taskbar
-		spawnX := useTrayHandler ? TrayIconHandlerObj.TrayMouseX - (w // 2) : trayCenterX - (w // 2)
-		spawnY := useTrayHandler ? min( TrayIconHandlerObj.TrayMouseY, tbY) - h - offsetGap : tbY - h - offsetGap
-	} else if (minDist == distLeft) {
-		; Left Taskbar
-		spawnX := useTrayHandler ? max( TrayIconHandlerObj.TrayMouseX, (tbX + tbW)) + offsetGap : (tbX + tbW) + offsetGap
-		spawnY := useTrayHandler ? TrayIconHandlerObj.TrayMouseY - (h // 2) : trayCenterY - (h // 2)
-	} else {
-		; Right Taskbar
-		spawnX := useTrayHandler ? min( TrayIconHandlerObj.TrayMouseX, tbX) - w - offsetGap : tbX - w - offsetGap
-		spawnY := useTrayHandler ? TrayIconHandlerObj.TrayMouseY - (h // 2) : trayCenterY - (h // 2)
-	}
-
-	; ToolTip(useTrayHandler " " TrayIconHandlerObj.TrayMouseX "`n" spawnX "`n" spawnY)
-
-	; 6. Safeguard: Clamp inside physical monitor boundaries so GUI doesn't go off-screen
-	pad := Floor(8 * scaleFactor)
-	if (spawnY < mT + pad)
-		spawnY := mT + pad
-	if (spawnY + h > mB - pad)
-		spawnY := mB - pad - h
-	if (spawnX < mL + pad)
-		spawnX := mL + pad
-	if (spawnX + w > mR - pad)
-		spawnX := mR - pad - w
-
-    
-    ;DllCall("User32\SetWindowPos", "Ptr", MainGui.Hwnd, "Ptr", 0, "Int", spawnX, "Int", spawnY, "Int", w, "Int", h, "UInt", 0x0014 | 0x0040)
-    ;IsGuiVisible := true
-    ;DllCall("user32\SetWindowPos", "Ptr", MainGui.Hwnd, "Ptr", -1, "Int", 0, "Int", 0, "Int", 0, "Int", 0, "UInt", 0x0043)
-
+    pad := Floor(8 * scaleFactor)
+    if (spawnY < mT + pad)
+        spawnY := mT + pad
+    if (spawnY + h > mB - pad)
+        spawnY := mB - pad - h
+    if (spawnX < mL + pad)
+        spawnX := mL + pad
+    if (spawnX + w > mR - pad)
+        spawnX := mR - pad - w
 }
 
 
-
 /**
+ * @description {@link GuiAtTray|_HelperFuncs.ahk}
  * Parse an object into strings to easy visualization of data
  * @param obj 
  * The Object to parse
@@ -705,4 +676,137 @@ ObjToString(obj) {
     for prop, val in obj.OwnProps()
         str .= prop ": " val "`n"
     return RTrim(str, "`n")
+}
+
+/**
+ * @description {@link EnableAutoScroll|_HelperFuncs.ahk}
+ * Dynamically enables mouse wheel vertical scrolling for a GUI without native scrollbars when content exceeds visible bounds.
+ * Retains pinned controls (.noScroll := true), prevents High-DPI position drift, and cleanups message hooks on close/destroy.
+ * @param {Gui} guiObj 
+ * The AutoHotkey GUI object instance to apply auto-scrolling to
+ * @param {Integer} [scrollSpeed=50] 
+ * Pixel distance moved per mouse wheel notch click
+ * @param {Float} [maxScreenRatio=1.0] 
+ * Maximum allowable screen height ratio before constraining the GUI size
+ * @returns {Void}
+ * @example <caption>Enable auto-scrolling on a GUI post-show while keeping title bar pinned</caption>
+ * CustomTitleBar.Attach(myGui)
+ * myGui.Show("xCenter yCenter h300")
+ * EnableAutoScroll(myGui, 40)
+ */
+EnableAutoVerticalScroll(guiObj, scrollSpeed := 50, maxScreenRatio := 1.0) {
+    guiObj.GetPos(, , , &winH)
+    guiObj.GetClientPos(, , , &clientH)
+
+    controls := []
+    contentHeight := 0
+    for ctrl in guiObj {
+        ctrl.GetPos(&x, &y, , &h)
+        
+        if (y + h > contentHeight)
+            contentHeight := y + h
+            
+        if (HasProp(ctrl, "noScroll") && ctrl.noScroll)
+            continue
+            
+        controls.Push({ ctrl: ctrl, origX: x, origY: y })
+    }
+    contentHeight += 20
+
+    MonitorGetWorkArea(1, , , , &workAreaBottom)
+    maxAllowedHeight := Integer(workAreaBottom * maxScreenRatio)
+
+    if (winH > maxAllowedHeight) {
+        guiObj.Move(, , , maxAllowedHeight)
+        guiObj.GetClientPos(, , , &clientH)
+    }
+
+    maxScroll := contentHeight - clientH
+    if (maxScroll <= 0)
+        return
+
+    currentScroll := 0
+
+    ; Centralized Cleanup Helper
+    CleanClose(*) {
+        if IsSet(MessageManager) {
+            MessageManager.Unregister(0x020A, OnMouseWheel)
+            MessageManager.Unregister(0x0082, OnNCDestroy)
+        } else {
+            OnMessage(0x020A, OnMouseWheel, 0)
+            OnMessage(0x0082, OnNCDestroy, 0)
+        }
+    }
+
+    OnMouseWheel(wParam, lParam, msg, hwnd) {
+        try {
+            guiHwnd := guiObj.Hwnd
+        } catch {
+            CleanClose()
+            return
+        }
+
+        if (hwnd != guiHwnd && !DllCall("IsChild", "Ptr", guiHwnd, "Ptr", hwnd))
+            return
+
+        delta := (wParam >> 16) & 0xFFFF
+        direction := (delta & 0x8000) ? 1 : -1
+        
+        newScroll := Min(maxScroll, Max(0, currentScroll + (direction * scrollSpeed)))
+
+        if (newScroll != currentScroll) {
+            currentScroll := newScroll
+            
+            DllCall("SendMessage", "Ptr", guiHwnd, "UInt", 0x000B, "Ptr", 0, "Ptr", 0)
+            
+            for item in controls {
+                item.ctrl.Move(item.origX, item.origY - currentScroll)
+            }
+            
+            DllCall("SendMessage", "Ptr", guiHwnd, "UInt", 0x000B, "Ptr", 1, "Ptr", 0)
+            WinRedraw(guiObj)
+        }
+    }
+
+    OnNCDestroy(wParam, lParam, msg, hwnd) {
+        try {
+            if (hwnd == guiObj.Hwnd)
+                CleanClose()
+        } catch {
+            CleanClose()
+        }
+    }
+
+    ; Bind events & message hooks
+    guiObj.OnEvent("Close", (*) => CleanClose())
+
+    if IsSet(MessageManager) {
+        MessageManager.Register(0x0082, OnNCDestroy)
+        MessageManager.Register(0x020A, OnMouseWheel)
+    } else {
+        OnMessage(0x0082, OnNCDestroy)
+        OnMessage(0x020A, OnMouseWheel)
+    }
+}
+
+/**
+ * @description {@link ApplyHDRFontQuality|_HelperFuncs.ahk}
+ * Applies Standard/Monochrome quality (Quality 3) for texts instead of ClearType
+ * if HDR is enabled
+ * @param {GuiObj} [myGui]
+ * The GUI to apply q3
+* @returns {Void}
+ */
+ApplyHDRFontQuality(myGui) {
+;    if !IsHDREnabled()
+;        return
+	if !(IsSet(General) && General.HasOwnProp("HDR") && (General.HDR == 1)) {
+		return
+	}
+
+    for hwnd, ctrl in myGui {
+        try {
+            ctrl.SetFont("q3")
+        }
+    }
 }
