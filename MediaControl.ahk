@@ -1,18 +1,18 @@
 ﻿;@region Setup
 ;@region Description
 /************************************************************************
- * @description This is a template as a starting point for your AutoHotKey projects.
+ * @description A Controller for current media playing, actions from tray icon and a beautiful popup with Artwork.
  * @author Melo (melo@meloprofessional.com)
  * @date 2026/09/03
  * @releasedate 2026/08/24
- * @version 1.0.0.133
+ * @version 1.0.0.134
  ***********************************************************************/
 
 AppName := "Media Control"
 ;@Ahk2Exe-Let U_AppName = %A_PriorLine%
-AppVersion := "1.0.0.133"
+AppVersion := "1.0.0.134"
 ;@Ahk2Exe-Let U_Version = %A_PriorLine%
-AppDescription := "This is a template as a starting point for your AutoHotKey projects. This is a template as a starting point for your AutoHotKey projects."
+AppDescription := "A Controller for current media playing, actions from tray icon and a beautiful popup with Artwork."
 ;@Ahk2Exe-AddResource .\resources\play.png, 209
 ;@Ahk2Exe-AddResource .\resources\pause.png, 210
 ;@Ahk2Exe-AddResource .\resources\next.png, 211
@@ -64,7 +64,7 @@ KeyHistory(0)
 #Include *i <_SplashScreen>
 ;#Include *i <_SplashOSD>
 #Include *i <_About>
-#Include *i <_Help>
+;#Include *i <_Help>
 #Include *i <_Menu>
 
 #Include <Vars_Custom>
